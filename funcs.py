@@ -51,6 +51,29 @@ class Grid:
     def play_move(self, piece, move):
         for i in range(len(piece.piece)):
             self.grid[move + i] = piece.piece[i]
+        #comple line or squad
+        case_to_delete = [0 for i in range(81)]
+        #horizontal
+        for i in range(9):
+            if self.grid[i*9:(i+1)*9] == [1 for z in range(9)]:
+                for j in range(9):
+                    case_to_delete[i*9+j]=1
+        #vertical
+        for i in range(9):
+            if [self.grid[z*9+i] for z in range(9)]==[1,1,1,1,1,1,1,1,1]:
+                for j in range(9):
+                    case_to_delete[j*9+i]=1
+        
+        #square
+        for y in range(3):
+            for x in range(3):
+                pos = y*3+x*3
+                if [self.grid[pos + z//3+z%3*9] for z in range(9)] == [1,1,1,1,1,1,1,1,1]:
+                    for i in range(9):
+                        case_to_delete[pos + i//3+i%3*9] = 1
+        
+        for i in range(81):
+            self.grid[i] -= case_to_delete[i]
 
     def see_grid(self):
         for i in range(81):
@@ -106,11 +129,17 @@ def make_piece(piece):
 
 def blockudoku(grid, deepmax):
     if grid.deep==deepmax:
+        print(f"deep: {grid.deep}")
+        print("grid")
+        grid.see_grid()
+        print(f"moves: {grid.moves}")
         grid.square_number = grid.get_square_number()
         return
     
     for piece in grid.pieces:
         moves = grid.get_moves(piece)
+        #grid.see_grid()
+        #print(moves)
         #print(moves)
         for move in moves:
             child = Grid(grid.grid, grid.pieces, grid.moves)
@@ -125,6 +154,10 @@ def blockudoku(grid, deepmax):
             grid.square_number = child.square_number
             grid.moves = child.moves
             grid.final_grid = child.grid
+    print(f"deep: {grid.deep}")
+    print("grid")
+    grid.see_grid()
+    print(f"moves: {grid.moves}")
     return
 
 """
