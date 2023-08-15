@@ -1,27 +1,73 @@
 import pygame
 import funcs
 
-def change_color_square(pos, grid, blockudoku_squares, pieces_squares, pieces_grid):
+def remove_piece(piece, pieces_grid):
+    pieces = []
+    for i in range(3):
+        if not pieces_grid[i*25:i*25+25]==[0 for i in range(25)]:
+            temp = funcs.make_piece(pieces_grid[i*25:i*25+25])
+            if temp.x == piece.x and temp.y==piece.y and temp.piece == piece.piece:
+                for j in range(25):
+                    pieces_grid[i*25+j]=0
+                return
+
+
+def ungrey(grid):
+    for i in range(81):
+        if grid[i]==-1:
+            grid[i]=1
+
+def up_color_square(pos, grid, blockudoku_squares, pieces_squares, pieces_grid):
     for i in range(81):
         if blockudoku_squares[i].collidepoint(pos):
-            grid[i] = (grid[i]+1)%2
+            if grid[i]==-1:
+                ungrey(grid)
+                return   
+            grid[i] +=1
             return
+    #pieces grid
     for i in range(75):
         if pieces_squares[i].collidepoint(pos):
             pieces_grid[i] = (pieces_grid[i]+1)%2
             return
+
+def down_color_square(pos, grid, blockudoku_squares):
+    for i in range(81):
+        if blockudoku_squares[i].collidepoint(pos):
+            grid[i] -=1
+            return
+    #pieces grid
+    for i in range(75):
+        if pieces_squares[i].collidepoint(pos):
+            pieces_grid[i] = (pieces_grid[i]+1)%2
+            return
+
+
+def show_next_move(piece, grid, move):
+    print(piece)
+    print(grid)
+    for i in range(len(piece)):
+        if piece[i]==1:
+            grid[i+move]=-1
+
 
 def update_view(screen, blockudoku_board, blockudoku_squares, pieces_grid, pieces_squares):
     screen.fill("blue")
     #update the view of the grid
     pygame.draw.rect(screen, "black", blockudoku_board)
     for i in range(81):
-        if grid[i]==1:
+        if grid[i]==-1:
+            pygame.draw.rect(screen, "grey", blockudoku_squares[i])
+        elif grid[i]==0:
+            pygame.draw.rect(screen, "white", blockudoku_squares[i])
+        elif grid[i]==1:
             pygame.draw.rect(screen, "blue", blockudoku_squares[i])
         elif grid[i]==2:
-            pygame.draw.rect(screen, "white", blockudoku_squares[i])
-        else:
-            pygame.draw.rect(screen, "grey", blockudoku_squares[i])
+            pygame.draw.rect(screen, "yellow", blockudoku_squares[i])
+        elif grid[i]==3:
+            pygame.draw.rect(screen, "orange", blockudoku_squares[i])
+        elif grid[i]==4:
+            pygame.draw.rect(screen, "red", blockudoku_squares[i])
         pygame.draw.rect(screen, "black", blockudoku_squares[i], 1)
     
     #update the view of the moves
@@ -45,10 +91,13 @@ def bot(grid, pieces_grid):
     for i in range(3):
         if not pieces_grid[i*25:i*25+25]==[0 for i in range(25)]:
             pieces.append(funcs.make_piece(pieces_grid[i*25:i*25+25]))
-    grid = funcs.Grid(grid, pieces, [])
-    funcs.blockudoku(grid, len(pieces))
-    for move in grid.moves:
+    new_grid = funcs.Grid(grid, pieces, [])
+    funcs.blockudoku(new_grid, len(pieces))
+    for move in new_grid.moves:
         print(f"move: {move[0]}, piece: {move[1].piece}")
+    next_piece = new_grid.moves[0][1]
+    show_next_move(next_piece.piece, grid, new_grid.moves[0][0])
+    remove_piece(next_piece, pieces_grid)
 
 
 pygame.init()
@@ -87,13 +136,14 @@ while running:
         
         if event.type == pygame.MOUSEBUTTONUP:
             pos = pygame.mouse.get_pos()
-            numBouton = event.button
-            if numBouton == 1:
-                change_color_square(pos, grid, blockudoku_squares, pieces_squares, pieces_grid)
-                if is_valid_pressed(pos, valid_button) and not 3 in grid:
+            numButton = event.button
+            print(numButton)
+            if numButton == 1:
+                up_color_square(pos, grid, blockudoku_squares, pieces_squares, pieces_grid)
+                if is_valid_pressed(pos, valid_button):
                     bot(grid, pieces_grid)
-                elif is_valid_pressed(pos, valid_button) and 3 in grid:
-                    pass
+            elif numButton == 3:
+                down_color_square(pos, grid, blockudoku_squares)
                     
 
     # update the view
